@@ -4,7 +4,7 @@ import { Menu, User, Bell, MapPin, Calendar, CheckCircle } from 'lucide-react';
 
 const StudentDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const userName = "Erick"; // This will eventually come from your Auth state
+    const userName = "Sammi-Drumz"; // This will eventually come from your Auth state
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
