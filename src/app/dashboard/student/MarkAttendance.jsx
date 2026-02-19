@@ -1,155 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import Sidebar from '../../../components/shared/Sidebar';
-import { Menu, MapPin, Key, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, RefreshCw } from 'lucide-react';
-import { useGeofence } from '../../../hooks/useGeofence';
+import React, { useState } from 'react';
+import DashboardLayout from '../../../components/shared/DashboardLayout';
+import { MapPin, ShieldCheck, Lock, Unlock, CheckCircle2, Navigation } from 'lucide-react';
 
 const MarkAttendance = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const { isInside, verifyLocation, loading } = useGeofence(); // Added loading state to your hook logic
-    const [step, setStep] = useState(1);
-    const [classCode, setClassCode] = useState('');
-    const [status, setStatus] = useState('idle');
+    // Phases: 'geofence' (Step 1) or 'code' (Step 2)
+    const [phase, setPhase] = useState('geofence');
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+
+    // Handle 6-digit input
+    const handleOtpChange = (element, index) => {
+        if (isNaN(element.value)) return false;
+        setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
+        if (element.nextSibling) element.nextSibling.focus();
+    };
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] flex font-sans text-slate-900">
-            <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <DashboardLayout role="student">
+            <div className="max-w-xl mx-auto py-10 px-4">
 
-            <div className="flex-1 md:ml-64">
-                {/* Modern Top Header */}
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 md:px-10 sticky top-0 z-40">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 hover:bg-slate-100 rounded-full transition-colors">
-                            <Menu size={24} />
+                {/* Visual Progress Stepper */}
+                <div className="flex items-center justify-between mb-12 relative">
+                    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-700 -z-10"></div>
+                    <StepCircle icon={<Navigation size={18} />} active={true} completed={phase === 'code'} label="GPS Check" />
+                    <StepCircle icon={<Lock size={18} />} active={phase === 'code'} completed={false} label="Class Code" />
+                </div>
+
+                {phase === 'geofence' ? (
+                    /* PHASE 1: GEOFENCE VALIDATION */
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 border border-slate-200 dark:border-slate-700 shadow-2xl text-center space-y-6">
+                        <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto border-4 border-blue-100 dark:border-blue-800">
+                            <MapPin size={40} className="text-blue-600 animate-bounce" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Validating Location...</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mt-2">We are confirming you are within the Hall B boundary.</p>
+                        </div>
+
+                        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-2xl flex items-center gap-4 border border-green-100 dark:border-green-800">
+                            <ShieldCheck className="text-green-600" />
+                            <span className="text-sm font-bold text-green-700 dark:text-green-400 text-left">GPS Signal Verified: On Campus</span>
+                        </div>
+
+                        <button
+                            onClick={() => setPhase('code')}
+                            className="w-full bg-slate-900 dark:bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-xl"
+                        >
+                            <Unlock size={20} /> Proceed to Class Code
                         </button>
-                        <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                            Secure Check-in
-                        </h2>
                     </div>
-
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full border border-blue-100">
-                        <ShieldCheck size={16} className="text-blue-600" />
-                        <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Level 2 Security</span>
-                    </div>
-                </header>
-
-                <main className="p-6 md:p-12 max-w-4xl mx-auto">
-                    {/* Progress Tracker UI */}
-                    <div className="flex items-center justify-center mb-12 gap-4">
-                        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-blue-600' : 'text-slate-400'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 ${step >= 1 ? 'border-blue-600 bg-blue-50' : 'border-slate-300'}`}>1</div>
-                            <span className="hidden sm:inline font-semibold">Campus Arrival</span>
+                ) : (
+                    /* PHASE 2: LECTURER CODE ENTRY */
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 border border-slate-200 dark:border-slate-700 shadow-2xl text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 transition-all">
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Enter Class Code</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mt-2">Type the 6-digit code shown on the lecturer's screen.</p>
                         </div>
-                        <div className="w-12 h-0.5 bg-slate-200"></div>
-                        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-blue-600' : 'text-slate-400'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 ${step >= 2 ? 'border-blue-600 bg-blue-50' : 'border-slate-300'}`}>2</div>
-                            <span className="hidden sm:inline font-semibold">Class Verification</span>
+
+                        {/* 6-Digit OTP Inputs */}
+                        <div className="flex justify-between gap-2">
+                            {otp.map((data, index) => (
+                                <input
+                                    key={index}
+                                    type="text"
+                                    maxLength="1"
+                                    className="w-12 h-16 text-2xl font-black text-center bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-blue-600 dark:focus:border-blue-500 outline-none transition-all dark:text-white"
+                                    value={data}
+                                    onChange={e => handleOtpChange(e.target, index)}
+                                    onFocus={e => e.target.select()}
+                                />
+                            ))}
                         </div>
+
+                        <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 dark:shadow-none">
+                            <CheckCircle2 size={20} /> Complete Check-in
+                        </button>
+
+                        <button
+                            onClick={() => setPhase('geofence')}
+                            className="text-slate-400 font-bold text-sm hover:text-slate-600 dark:hover:text-slate-200"
+                        >
+                            Back to Location
+                        </button>
                     </div>
-
-                    <div className="relative group">
-                        {/* Background Decorative Blur */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-
-                        <div className="relative bg-white rounded-[2rem] shadow-2xl shadow-blue-900/5 border border-white p-8 md:p-12 overflow-hidden">
-
-                            {status === 'success' ? (
-                                /* Success View */
-                                <div className="text-center space-y-6 animate-in fade-in zoom-in duration-500">
-                                    <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-green-50">
-                                        <CheckCircle2 size={48} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-3xl font-black text-slate-900">All Set!</h3>
-                                        <p className="text-slate-500 mt-2">Your attendance has been digitally signed and verified.</p>
-                                    </div>
-                                    <button onClick={() => window.location.href = '/dashboard/student'} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition shadow-xl">
-                                        Return to Home
-                                    </button>
-                                </div>
-                            ) : (
-                                <>
-                                    {/* STEP 1: CAMPUS ENTRY UI */}
-                                    {step === 1 && (
-                                        <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="flex flex-col items-center text-center space-y-4">
-                                                <div className="relative">
-                                                    <div className={`absolute -inset-4 rounded-full opacity-20 animate-ping ${isInside ? 'bg-green-400' : 'bg-blue-400'}`}></div>
-                                                    <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl transition-colors duration-500 ${isInside ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}`}>
-                                                        <MapPin size={40} />
-                                                    </div>
-                                                </div>
-                                                <h3 className="text-2xl font-bold">Step 1: Locate Campus</h3>
-                                                <p className="text-slate-500 max-w-xs">We need to verify you are physically at the University before the class code can be used.</p>
-                                            </div>
-
-                                            <div className={`p-6 rounded-2xl border-2 transition-all duration-500 ${isInside ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-3 h-3 rounded-full ${isInside ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                                        <span className={`font-bold ${isInside ? 'text-green-700' : 'text-slate-500'}`}>
-                                                            {isInside ? 'University Detected' : 'Scanning for University...'}
-                                                        </span>
-                                                    </div>
-                                                    <button onClick={verifyLocation} className="p-2 hover:bg-white rounded-lg transition-colors text-blue-600">
-                                                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                onClick={() => setStep(2)}
-                                                disabled={!isInside}
-                                                className="group w-full bg-slate-900 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 transition-all duration-300 shadow-xl"
-                                            >
-                                                Proceed to Class Check-in
-                                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {/* STEP 2: CLASS CODE UI */}
-                                    {step === 2 && (
-                                        <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="flex flex-col items-center text-center space-y-4">
-                                                <div className="w-20 h-20 bg-indigo-600 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-indigo-200">
-                                                    <Key size={40} />
-                                                </div>
-                                                <h3 className="text-2xl font-bold text-slate-900">Enter Class Code</h3>
-                                                <p className="text-slate-500">Input the 6-digit code displayed on the lecturer's screen.</p>
-                                            </div>
-
-                                            <div className="flex justify-center gap-3">
-                                                <input
-                                                    type="text"
-                                                    maxLength={6}
-                                                    value={classCode}
-                                                    onChange={(e) => setClassCode(e.target.value)}
-                                                    placeholder="••••••"
-                                                    className="w-full max-w-[280px] text-center text-5xl font-black tracking-[0.3em] py-6 bg-slate-50 border-b-4 border-slate-200 focus:border-indigo-600 focus:bg-white outline-none transition-all placeholder:text-slate-200 rounded-t-2xl"
-                                                />
-                                            </div>
-
-                                            <div className="flex gap-4">
-                                                <button onClick={() => setStep(1)} className="flex-1 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-colors">
-                                                    Back
-                                                </button>
-                                                <button
-                                                    onClick={() => setStatus('success')}
-                                                    className="flex-[2] bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all transform active:scale-95"
-                                                >
-                                                    Confirm Attendance
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </main>
+                )}
             </div>
-        </div>
+        </DashboardLayout>
     );
 };
+
+// Stepper Component
+const StepCircle = ({ icon, active, completed, label }) => (
+    <div className="flex flex-col items-center gap-2">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all
+            ${completed ? 'bg-green-500 border-green-100 text-white' :
+                active ? 'bg-blue-600 border-blue-100 text-white scale-110 shadow-lg' :
+                    'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}>
+            {completed ? <CheckCircle2 size={20} /> : icon}
+        </div>
+        <span className={`text-[10px] font-black uppercase tracking-widest ${active ? 'text-blue-600' : 'text-slate-400'}`}>
+            {label}
+        </span>
+    </div>
+);
 
 export default MarkAttendance;
