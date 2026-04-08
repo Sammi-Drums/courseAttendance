@@ -5,12 +5,26 @@ import { Sun, Moon, Bell, User, PanelLeftClose, PanelLeft } from 'lucide-react';
 const DashboardLayout = ({ children, role }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer
     const [isCollapsed, setIsCollapsed] = useState(false); // Desktop mini-mode
-    const [darkMode, setDarkMode] = useState(false);
+    const [darkMode, setDarkMode] = useState(() => {
+        try {
+            const saved = localStorage.getItem('darkMode');
+            if (saved !== null) return saved === 'true';
+        } catch (e) {
+            // ignore
+        }
+        return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    });
+
+    useEffect(() => {
+        const root = document.documentElement;
+        if (darkMode) root.classList.add('dark'); else root.classList.remove('dark');
+        try { localStorage.setItem('darkMode', darkMode ? 'true' : 'false'); } catch (e) { }
+    }, [darkMode]);
 
     return (
         <div className={darkMode ? 'dark' : ''}>
             <div className="min-h-screen flex bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 transition-colors duration-300">
-            {/* <div className="bg-white dark:bg-[#0f172a] transition-colors"></div> */}
+                {/* <div className="bg-white dark:bg-[#0f172a] transition-colors"></div> */}
                 <Sidebar
                     isOpen={isSidebarOpen}
                     isCollapsed={isCollapsed}
@@ -80,3 +94,4 @@ const DashboardLayout = ({ children, role }) => {
 };
 
 export default DashboardLayout;
+

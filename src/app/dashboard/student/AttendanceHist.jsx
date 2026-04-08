@@ -44,7 +44,7 @@ const AttendanceHistory = () => {
                                         <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.time}</td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${row.status === 'Present' ? 'bg-green-100 text-green-700' :
-                                                    row.status === 'Late' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                                row.status === 'Late' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                                                 }`}>
                                                 {row.status}
                                             </span>
